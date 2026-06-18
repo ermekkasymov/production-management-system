@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Система управления производством — ТОО KUS &amp; ТОО SSAP</title>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.10.3/Recharts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  :root {
+    --kus: #185FA5;
+    --kus-light: #B5D4F4;
+    --ssap: #D85A30;
+    --ssap-light: #F0997B;
+    --green: #1E9E5A;
+    --green-bg: #E6F6EE;
+    --orange: #E08A1E;
+    --orange-bg: #FCF1DF;
+    --bg: #F4F6F9;
+    --card: #FFFFFF;
+    --border: #E2E7EF;
+    --text: #1C2533;
+    --muted: #6B7686;
+    --shadow: 0 1px 3px rgba(20,30,50,.08), 0 1px 2px rgba(20,30,50,.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Roboto, system-ui, -apple-system, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px 48px; }
+
+  header.app-header {
+    background: linear-gradient(120deg, #133b6b 0%, #185FA5 60%, #2a7fc4 100%);
+    color: #fff;
+    padding: 20px 0;
+    box-shadow: var(--shadow);
+  }
+  header.app-header .wrap { padding-bottom: 0; padding-top: 0; }
+  .app-title { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .app-sub { font-size: 13.5px; opacity: .85; margin-top: 4px; }
+
+  .nav { display: flex; gap: 8px; margin: 18px 0 22px; flex-wrap: wrap; }
+  .nav button {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .nav button:hover { color: var(--text); border-color: #c8d2e0; }
+  .nav button.active { background: var(--kus); color: #fff; border-color: var(--kus); box-shadow: var(--shadow); }
+
+  .ent-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .ent-tabs button {
+    flex: 0 0 auto;
+    border: none;
+    padding: 11px 26px;
+    border-radius: 10px 10px 0 0;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    background: #e7ecf3; color: var(--muted);
+    transition: all .15s;
+  }
+  .ent-tabs button.active-kus { background: var(--kus); color: #fff; }
+  .ent-tabs button.active-ssap { background: var(--ssap); color: #fff; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+  }
+  .card h2 { margin: 0 0 4px; font-size: 17px; }
+  .card .hint { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+  .section-title { font-size: 16px; font-weight: 700; margin: 26px 0 12px; }
+
+  .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 20px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .field label .req { color: var(--ssap); margin-left: 2px; }
+  .field .unit { color: var(--muted); font-weight: 400; }
+  .field input, .field textarea {
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 12px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fff;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field input:focus, .field textarea:focus {
+    outline: none; border-color: var(--kus);
+    box-shadow: 0 0 0 3px rgba(24,95,165,.12);
+  }
+  .field textarea { resize: vertical; min-height: 60px; }
+  .field input.invalid, .field textarea.invalid { border-color: var(--ssap); box-shadow: 0 0 0 3px rgba(216,90,48,.12); }
+  .err-text { color: var(--ssap); font-size: 12px; }
+  .char-count { color: var(--muted); font-size: 11.5px; text-align: right; }
+
+  .btn {
+    border: none; border-radius: 10px; padding: 11px 22px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-primary { background: var(--kus); color: #fff; }
+  .btn-primary:hover { background: #14528f; }
+  .btn-ssap { background: var(--ssap); color: #fff; }
+  .btn-ssap:hover { background: #c24d27; }
+  .btn-ghost { background: #eef2f7; color: var(--text); }
+  .btn-ghost:hover { background: #e2e8f0; }
+  .btn-row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+
+  .toast {
+    position: fixed; top: 18px; right: 18px; z-index: 100;
+    background: var(--green); color: #fff;
+    padding: 13px 20px; border-radius: 11px;
+    box-shadow: 0 6px 20px rgba(20,40,30,.25);
+    font-weight: 600; display: flex; align-items: center; gap: 10px;
+    animation: slidein .35s cubic-bezier(.2,.9,.3,1.2);
+  }
+  .toast.error { background: var(--ssap); box-shadow: 0 6px 20px rgba(80,30,20,.25); }
+  @keyframes slidein { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .metric {
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; background: #fff;
+    border-left: 5px solid var(--kus);
+  }
+  .metric.ssap { border-left-color: var(--ssap); }
+  .metric.green { border-left-color: var(--green); background: var(--green-bg); }
+  .metric.orange { border-left-color: var(--orange); background: var(--orange-bg); }
+  .metric .m-label { font-size: 12.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+  .metric .m-value { font-size: 26px; font-weight: 800; margin-top: 4px; line-height: 1.1; }
+  .metric .m-unit { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .metric.green .m-value { color: var(--green); }
+  .metric.orange .m-value { color: var(--orange); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th {
+    text-align: left; padding: 10px 12px;
+    background: #eef2f7; color: var(--muted);
+    font-size: 12.5px; text-transform: uppercase; letter-spacing: .3px;
+    border-bottom: 2px solid var(--border); white-space: nowrap;
+  }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid #eef1f6; }
+  tbody tr.alt { background: #fafbfd; }
+  tbody tr.row-green { background: var(--green-bg); }
+  tbody tr.row-orange { background: var(--orange-bg); }
+  .pct-green { color: var(--green); font-weight: 700; }
+  .pct-orange { color: var(--orange); font-weight: 700; }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  .badge.kus { background: var(--kus-light); color: var(--kus); }
+  .badge.ssap { background: var(--ssap-light); color: #8a3415; }
+  .table-scroll { max-height: 460px; overflow-y: auto; border: 1px solid var(--border); border-radius: 12px; }
+  .table-scroll thead th { position: sticky; top: 0; z-index: 1; }
+
+  .filter-grid { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 14px; align-items: end; }
+  .filter-info { margin-top: 14px; color: var(--muted); font-size: 13.5px; }
+  .filter-info b { color: var(--text); }
+
+  .empty {
+    text-align: center; color: var(--muted); padding: 40px 20px;
+    font-size: 14.5px;
+  }
+  .chart-box { width: 100%; height: 340px; }
+  .chart-wrap { margin-bottom: 24px; }
+
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; }
+  .header-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+  @media (max-width: 760px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .filter-grid { grid-template-columns: 1fr 1fr; }
+    .filter-grid .btn { grid-column: span 1; }
+    .app-title { font-size: 18px; }
+  }
+  @media (max-width: 420px) {
+    .filter-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
+const {
+  ResponsiveContainer, LineChart, Line, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine
+} = Recharts;
+
+const STORAGE_KEY = "productionData";
+const TARGET = 95; // целевой % выполнения плана
+
+/* ---------- Утилиты ---------- */
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) {
+    console.error("Ошибка чтения данных:", e);
+    return [];
+  }
+}
+function saveData(arr) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+}
+function todayISO() {
+  const d = new Date();
+  const off = d.getTimezoneOffset();
+  return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
+}
+function fmtDate(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+}
+function fmtNum(n, dp) {
+  if (n === null || n === undefined || isNaN(n)) return "—";
+  return Number(n).toLocaleString("ru-RU", { minimumFractionDigits: 0, maximumFractionDigits: dp });
+}
+// Экранирование пользовательского текста (защита от XSS) — React экранирует сам,
+// но дополнительно нормализуем при выводе.
+function clean(str) {
+  return (str || "").toString().slice(0, 500);
+}
+function pct(actual, plan) {
+  if (!plan || plan <= 0) return null;
+  return (actual / plan) * 100;
+}
+
+/* Нормализация записи в строку таблицы { date, enterprise, actual, plan, pct, note } */
+function toRow(rec) {
+  if (rec.enterprise === "KUS") {
+    const a = rec.electricity ? rec.electricity.actual : null;
+    const p = rec.electricity ? rec.electricity.plan : null;
+    return { ...rec, actual: a, plan: p, pct: pct(a, p), note: rec.waterQuality || "" };
+  } else {
+    const a = rec.sulfuric ? rec.sulfuric.actual : null;
+    const p = rec.sulfuric ? rec.sulfuric.plan : null;
+    return { ...rec, actual: a, plan: p, pct: pct(a, p), note: rec.quality || "" };
+  }
+}
+
+/* ---------- Toast ---------- */
+function Toast({ toast }) {
+  if (!toast) return null;
+  return (
+    <div className={"toast" + (toast.type === "error" ? " error" : "")}>
+      <span>{toast.type === "error" ? "⚠️" : "✅"}</span>
+      <span>{toast.msg}</span>
+    </div>
+  );
+}
+
+/* ---------- Числовое поле ---------- */
+function NumberField({ label, unit, value, onChange, required, error, step, min, max }) {
+  return (
+    <div className="field">
+      <label>{label} {unit && <span className="unit">({unit})</span>}{required && <span className="req">*</span>}</label>
+      <input
+        type="number" inputMode="decimal" step={step || "any"} min={min} max={max}
+        value={value} onChange={(e) => onChange(e.target.value)}
+        className={error ? "invalid" : ""} placeholder="0"
+        title={`Введите ${label.toLowerCase()}`}
+      />
+      {error && <span className="err-text">{error}</span>}
+    </div>
+  );
+}
+
+/* ---------- Метрика ---------- */
+function Metric({ label, value, unit, tone, ssap }) {
+  const cls = "metric" + (ssap ? " ssap" : "") + (tone === "green" ? " green" : tone === "orange" ? " orange" : "");
+  return (
+    <div className={cls} title={label}>
+      <div className="m-label">{label}</div>
+      <div className="m-value">{value}</div>
+      {unit && <div className="m-unit">{unit}</div>}
+    </div>
+  );
+}
+
+/* ---------- Таблица записей ---------- */
+function RecordsTable({ rows, scroll }) {
+  if (!rows.length) {
+    return <div className="empty">Нет записей для отображения. Добавьте данные на дашборде.</div>;
+  }
+  const body = (
+    <table>
+      <thead>
+        <tr>
+          <th>Дата</th><th>Компания</th><th>Факт</th><th>План</th><th>%</th><th>Примечание</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => {
+          const ok = r.pct !== null && r.pct >= TARGET;
+          const rowCls = (scroll ? (i % 2 ? "alt" : "") : (r.pct === null ? "" : ok ? "row-green" : "row-orange"));
+          const dp = r.enterprise === "KUS" ? 1 : 1;
+          return (
+            <tr key={r.timestamp + "_" + i} className={rowCls}>
+              <td>{fmtDate(r.date)}</td>
+              <td><span className={"badge " + (r.enterprise === "KUS" ? "kus" : "ssap")}>{r.enterprise}</span></td>
+              <td>{fmtNum(r.actual, dp)}</td>
+              <td>{fmtNum(r.plan, dp)}</td>
+              <td className={r.pct === null ? "" : ok ? "pct-green" : "pct-orange"}>
+                {r.pct === null ? "—" : r.pct.toFixed(1) + "%"}
+              </td>
+              <td title={r.note}>{r.note ? (r.note.length > 40 ? r.note.slice(0, 40) + "…" : r.note) : "—"}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+  return scroll ? <div className="table-scroll">{body}</div> : body;
+}
+
+/* ================= ДАШБОРД ================= */
+function Dashboard({ records, onSave }) {
+  const [ent, setEnt] = useState("KUS");
+  const [errors, setErrors] = useState({});
+  const blankKus = { date: todayISO(), elecActual: "", elecPlan: "", water: "", quality: "" };
+  const blankSsap = { date: todayISO(), sulfActual: "", sulfPlan: "", conc: "", quality: "" };
+  const [kus, setKus] = useState(blankKus);
+  const [ssap, setSsap] = useState(blankSsap);
+
+  const form = ent === "KUS" ? kus : ssap;
+  const setForm = ent === "KUS" ? setKus : setSsap;
+  const upd = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  function validate() {
+    const e = {};
+    if (!form.date) e.date = "Укажите дату";
+    if (ent === "KUS") {
+      if (form.elecActual === "") e.elecActual = "Обязательное поле";
+      if (form.elecPlan === "") e.elecPlan = "Обязательное поле";
+      if (form.water === "") e.water = "Обязательное поле";
+    } else {
+      if (form.sulfActual === "") e.sulfActual = "Обязательное поле";
+      if (form.sulfPlan === "") e.sulfPlan = "Обязательное поле";
+      if (form.conc !== "" && (Number(form.conc) < 0 || Number(form.conc) > 100))
+        e.conc = "Диапазон 0–100%";
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
+  function handleSave() {
+    if (!validate()) {
+      onSave(null, "Заполните все обязательные поля");
+      return;
+    }
+    let rec;
+    if (ent === "KUS") {
+      rec = {
+        date: form.date, enterprise: "KUS", timestamp: Date.now(),
+        electricity: { actual: Number(form.elecActual), plan: Number(form.elecPlan) },
+        waterClean: Number(form.water),
+        waterQuality: clean(form.quality),
+      };
+      setKus({ ...blankKus, date: form.date });
+    } else {
+      rec = {
+        date: form.date, enterprise: "SSAP", timestamp: Date.now(),
+        sulfuric: { actual: Number(form.sulfActual), plan: Number(form.sulfPlan) },
+        concentration: form.conc === "" ? null : Number(form.conc),
+        quality: clean(form.quality),
+      };
+      setSsap({ ...blankSsap, date: form.date });
+    }
+    setErrors({});
+    onSave(rec, null);
+  }
+
+  // Последние показатели выбранного предприятия
+  const lastRow = useMemo(() => {
+    const list = records.filter((r) => r.enterprise === ent).map(toRow);
+    return list.length ? list[0] : null;
+  }, [records, ent]);
+
+  // История последних 10 записей (все предприятия)
+  const history = useMemo(() => records.slice(0, 10).map(toRow), [records]);
+
+  const lastTone = lastRow && lastRow.pct !== null ? (lastRow.pct >= TARGET ? "green" : "orange") : "";
+  const unitMain = ent === "KUS" ? "кВч" : "т";
+
+  return (
+    <div>
+      <div className="ent-tabs">
+        <button className={ent === "KUS" ? "active-kus" : ""} onClick={() => { setEnt("KUS"); setErrors({}); }}>ТОО KUS</button>
+        <button className={ent === "SSAP" ? "active-ssap" : ""} onClick={() => { setEnt("SSAP"); setErrors({}); }}>ТОО SSAP</button>
+      </div>
+
+      <div className="card">
+        <h2>Ввод данных — {ent === "KUS" ? "ТОО KUS (электроэнергия и вода)" : "ТОО SSAP (серная кислота)"}</h2>
+        <p className="hint">Заполните показатели за день. Поля со звёздочкой (<span style={{color:"var(--ssap)"}}>*</span>) обязательны.</p>
+
+        <div className="form-grid">
+          <div className="field full" style={{maxWidth: 260}}>
+            <label>Дата записи<span className="req">*</span></label>
+            <input type="date" value={form.date} max={todayISO()}
+              className={errors.date ? "invalid" : ""}
+              onChange={(e) => upd("date", e.target.value)} />
+            {errors.date && <span className="err-text">{errors.date}</span>}
+          </div>
+
+          {ent === "KUS" ? (
+            <React.Fragment>
+              <NumberField label="Выработка электроэнергии — факт" unit="кВч" required
+                value={form.elecActual} onChange={(v) => upd("elecActual", v)} error={errors.elecActual} step="0.01" min="0" />
+              <NumberField label="Выработка электроэнергии — план" unit="кВч" required
+                value={form.elecPlan} onChange={(v) => upd("elecPlan", v)} error={errors.elecPlan} step="0.01" min="0" />
+              <NumberField label="Объём очищенной воды" unit="м³" required
+                value={form.water} onChange={(v) => upd("water", v)} error={errors.water} step="0.1" min="0" />
+              <div className="field full">
+                <label>Качество воды <span className="unit">(опционально, до 500 симв.)</span></label>
+                <textarea maxLength={500} value={form.quality}
+                  placeholder='Напр.: "pH 7.2, мутность в норме"'
+                  onChange={(e) => upd("quality", e.target.value)} />
+                <span className="char-count">{form.quality.length}/500</span>
+              </div>
+            </React.Fragment>
+          ) : (
+            <React.Fragment>
+              <NumberField label="Производство серной кислоты — факт" unit="т" required
+                value={form.sulfActual} onChange={(v) => upd("sulfActual", v)} error={errors.sulfActual} step="0.1" min="0" />
+              <NumberField label="Производство серной кислоты — план" unit="т" required
+                value={form.sulfPlan} onChange={(v) => upd("sulfPlan", v)} error={errors.sulfPlan} step="0.1" min="0" />
+              <NumberField label="Концентрация" unit="%"
+                value={form.conc} onChange={(v) => upd("conc", v)} error={errors.conc} step="0.1" min="0" max="100" />
+              <div className="field full">
+                <label>Качество продукции <span className="unit">(опционально, до 500 симв.)</span></label>
+                <textarea maxLength={500} value={form.quality}
+                  placeholder='Напр.: "без примесей, плотность в норме"'
+                  onChange={(e) => upd("quality", e.target.value)} />
+                <span className="char-count">{form.quality.length}/500</span>
+              </div>
+            </React.Fragment>
+          )}
+        </div>
+
+        <div className="btn-row">
+          <button className={"btn " + (ent === "KUS" ? "btn-primary" : "btn-ssap")} onClick={handleSave}>
+            💾 Сохранить данные
+          </button>
+        </div>
+      </div>
+
+      <div className="section-title">Последние показатели — {ent}</div>
+      {lastRow ? (
+        <div className="stats-grid">
+          <Metric ssap={ent==="SSAP"} label={`${ent} Факт`} value={fmtNum(lastRow.actual, 1)} unit={`${unitMain} • ${fmtDate(lastRow.date)}`} />
+          <Metric ssap={ent==="SSAP"} label={`${ent} План`} value={fmtNum(lastRow.plan, 1)} unit={unitMain} />
+          <Metric tone={lastTone} label={`${ent} % выполнения`} value={lastRow.pct === null ? "—" : lastRow.pct.toFixed(1) + "%"} unit={lastTone === "green" ? "≥ 95% — норма" : "< 95% — внимание"} />
+        </div>
+      ) : (
+        <div className="empty">Пока нет данных для {ent}. Введите первую запись выше.</div>
+      )}
+
+      <div className="section-title">История записей (последние 10)</div>
+      <div className="card" style={{padding: 0, overflow: "hidden"}}>
+        <RecordsTable rows={history} scroll={false} />
+      </div>
+    </div>
+  );
+}
+
+/* ================= ОТЧЁТ ================= */
+function Report({ records }) {
+  const allRows = useMemo(() => records.map(toRow), [records]);
+  const dates = useMemo(() => records.map((r) => r.date).filter(Boolean).sort(), [records]);
+  const minD = dates[0] || todayISO();
+  const maxD = dates[dates.length - 1] || todayISO();
+
+  const [from, setFrom] = useState(minD);
+  const [to, setTo] = useState(maxD);
+  const [applied, setApplied] = useState({ from: minD, to: maxD });
+
+  // При появлении первых данных подставляем границы
+  useEffect(() => { setFrom(minD); setTo(maxD); setApplied({ from: minD, to: maxD }); }, [minD, maxD]);
+
+  const filtered = useMemo(
+    () => allRows.filter((r) => r.date >= applied.from && r.date <= applied.to)
+                 .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.timestamp - a.timestamp)),
+    [allRows, applied]
+  );
+
+  function applyFilter() { setApplied({ from, to }); }
+  function resetFilter() { setFrom(minD); setTo(maxD); setApplied({ from: minD, to: maxD }); }
+
+  // Итоговая статистика
+  const stats = useMemo(() => {
+    const acc = {
+      KUS: { actual: 0, plan: 0, days: new Set() },
+      SSAP: { actual: 0, plan: 0, days: new Set() },
+    };
+    filtered.forEach((r) => {
+      const s = acc[r.enterprise];
+      if (!s) return;
+      if (r.actual != null) s.actual += r.actual;
+      if (r.plan != null) s.plan += r.plan;
+      s.days.add(r.date);
+    });
+    return acc;
+  }, [filtered]);
+
+  const daysSpan = useMemo(() => {
+    const set = new Set(filtered.map((r) => r.date));
+    return set.size;
+  }, [filtered]);
+
+  // Данные графика выполнения плана по дням
+  const lineData = useMemo(() => {
+    const byDate = {};
+    filtered.forEach((r) => {
+      if (!byDate[r.date]) byDate[r.date] = { date: r.date };
+      if (r.pct !== null) byDate[r.date][r.enterprise] = Number(r.pct.toFixed(1));
+    });
+    return Object.values(byDate).sort((a, b) => (a.date < b.date ? -1 : 1))
+      .map((d) => ({ ...d, label: fmtDate(d.date) }));
+  }, [filtered]);
+
+  // Данные графика сравнения производства по дням
+  const barData = useMemo(() => {
+    const byDate = {};
+    filtered.forEach((r) => {
+      if (!byDate[r.date]) byDate[r.date] = { date: r.date };
+      if (r.enterprise === "KUS") {
+        byDate[r.date].kusFact = r.actual; byDate[r.date].kusPlan = r.plan;
+      } else {
+        byDate[r.date].ssapFact = r.actual; byDate[r.date].ssapPlan = r.plan;
+      }
+    });
+    return Object.values(byDate).sort((a, b) => (a.date < b.date ? -1 : 1))
+      .map((d) => ({ ...d, label: fmtDate(d.date) }));
+  }, [filtered]);
+
+  function statTone(s) {
+    const p = pct(s.actual, s.plan);
+    return p === null ? "" : p >= TARGET ? "green" : "orange";
+  }
+  function statPct(s) {
+    const p = pct(s.actual, s.plan);
+    return p === null ? "—" : p.toFixed(1) + "%";
+  }
+
+  const hasData = records.length > 0;
+
+  return (
+    <div>
+      <div className="card">
+        <h2>Выбор периода</h2>
+        <p className="hint">Отфильтруйте записи по диапазону дат для анализа.</p>
+        <div className="filter-grid">
+          <div className="field">
+            <label>Дата начала<span className="req">*</span></label>
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Дата окончания<span className="req">*</span></label>
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          </div>
+          <button className="btn btn-primary" onClick={applyFilter}>Применить фильтр</button>
+          <button className="btn btn-ghost" onClick={resetFilter}>Сбросить</button>
+        </div>
+        <div className="filter-info">
+          Показано <b>{filtered.length}</b> записей за <b>{daysSpan}</b> дн.
+          {hasData && <span> &nbsp;•&nbsp; период: {fmtDate(applied.from)} — {fmtDate(applied.to)}</span>}
+        </div>
+      </div>
+
+      {!hasData ? (
+        <div className="empty">Нет сохранённых данных. Перейдите на «Дашборд» и добавьте записи.</div>
+      ) : (
+        <React.Fragment>
+          <div className="section-title">Итоговая статистика за период</div>
+          <div className="stats-grid">
+            <Metric label="KUS Факт" value={fmtNum(stats.KUS.actual, 1)} unit={`кВч • ${stats.KUS.days.size} дн.`} />
+            <Metric label="KUS План" value={fmtNum(stats.KUS.plan, 1)} unit="кВч" />
+            <Metric tone={statTone(stats.KUS)} label="KUS % выполнения" value={statPct(stats.KUS)} unit={statTone(stats.KUS) === "green" ? "норма" : "внимание"} />
+            <Metric ssap label="SSAP Факт" value={fmtNum(stats.SSAP.actual, 1)} unit={`т • ${stats.SSAP.days.size} дн.`} />
+            <Metric ssap label="SSAP План" value={fmtNum(stats.SSAP.plan, 1)} unit="т" />
+            <Metric tone={statTone(stats.SSAP)} label="SSAP % выполнения" value={statPct(stats.SSAP)} unit={statTone(stats.SSAP) === "green" ? "норма" : "внимание"} />
+          </div>
+
+          <div className="section-title">Выполнение плана (% за день)</div>
+          <div className="card chart-wrap">
+            {lineData.length ? (
+              <div className="chart-box">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={lineData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#eef1f6" />
+                    <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0, 120]} tickFormatter={(v) => v + "%"} tick={{ fontSize: 12 }} />
+                    <Tooltip formatter={(v) => (v == null ? "—" : v + "%")} />
+                    <Legend />
+                    <ReferenceLine y={TARGET} stroke="#888" strokeDasharray="6 4" label={{ value: "Цель 95%", position: "right", fontSize: 11, fill: "#888" }} />
+                    <Line type="monotone" dataKey="KUS" name="KUS" stroke="#185FA5" strokeWidth={2.5} dot={{ r: 3 }} connectNulls />
+                    <Line type="monotone" dataKey="SSAP" name="SSAP" stroke="#D85A30" strokeWidth={2.5} dot={{ r: 3 }} connectNulls />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : <div className="empty">Недостаточно данных для графика.</div>}
+          </div>
+
+          <div className="section-title">Сравнение производства (KUS кВч / SSAP т)</div>
+          <div className="card chart-wrap">
+            {barData.length ? (
+              <div className="chart-box">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={barData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#eef1f6" />
+                    <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                    <YAxis yAxisId="left" orientation="left" stroke="#185FA5" tick={{ fontSize: 12 }} label={{ value: "KUS, кВч", angle: -90, position: "insideLeft", fontSize: 11, fill: "#185FA5" }} />
+                    <YAxis yAxisId="right" orientation="right" stroke="#D85A30" tick={{ fontSize: 12 }} label={{ value: "SSAP, т", angle: 90, position: "insideRight", fontSize: 11, fill: "#D85A30" }} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="kusFact" name="KUS факт" fill="#185FA5" />
+                    <Bar yAxisId="left" dataKey="kusPlan" name="KUS план" fill="#B5D4F4" />
+                    <Bar yAxisId="right" dataKey="ssapFact" name="SSAP факт" fill="#D85A30" />
+                    <Bar yAxisId="right" dataKey="ssapPlan" name="SSAP план" fill="#F0997B" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : <div className="empty">Недостаточно данных для графика.</div>}
+          </div>
+
+          <div className="section-title">Таблица записей за период</div>
+          <RecordsTable rows={filtered} scroll={true} />
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+
+/* ================= APP ================= */
+function App() {
+  const [view, setView] = useState("dashboard");
+  const [records, setRecords] = useState(() => loadData());
+  const [toast, setToast] = useState(null);
+  const fileRef = useRef(null);
+  const toastTimer = useRef(null);
+
+  // Сортировка: новые сверху (по дате, затем по timestamp)
+  const sortRecords = (arr) =>
+    [...arr].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.timestamp - a.timestamp));
+
+  function showToast(msg, type) {
+    setToast({ msg, type });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2800);
+  }
+
+  function handleSave(rec, errMsg) {
+    if (!rec) { showToast(errMsg || "Ошибка сохранения", "error"); return; }
+    try {
+      const next = sortRecords([rec, ...records]);
+      saveData(next);
+      setRecords(next);
+      showToast("Данные успешно сохранены", "ok");
+    } catch (e) {
+      showToast("Не удалось сохранить (хранилище переполнено?)", "error");
+    }
+  }
+
+  // Синхронизация между вкладками браузера
+  useEffect(() => {
+    function onStorage(e) {
+      if (e.key === STORAGE_KEY) setRecords(sortRecords(loadData()));
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  function exportData() {
+    const blob = new Blob([JSON.stringify(records, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "production_data_" + todayISO() + ".json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("Данные экспортированы", "ok");
+  }
+  function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const arr = JSON.parse(ev.target.result);
+        if (!Array.isArray(arr)) throw new Error("bad");
+        const next = sortRecords(arr);
+        saveData(next); setRecords(next);
+        showToast(`Импортировано записей: ${arr.length}`, "ok");
+      } catch (err) {
+        showToast("Ошибка импорта: неверный формат файла", "error");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
+
+  return (
+    <React.Fragment>
+      <Toast toast={toast} />
+      <header className="app-header">
+        <div className="wrap">
+          <div className="header-row">
+            <div>
+              <div className="app-title">📊 Система управления производством</div>
+              <div className="app-sub">ТОО KUS (электроэнергия и вода) &amp; ТОО SSAP (серная кислота)</div>
+            </div>
+            <div className="toolbar">
+              <button className="btn btn-ghost" onClick={exportData} title="Сохранить резервную копию в файл">⬇ Экспорт</button>
+              <button className="btn btn-ghost" onClick={() => fileRef.current && fileRef.current.click()} title="Загрузить данные из файла">⬆ Импорт</button>
+              <input ref={fileRef} type="file" accept="application/json,.json" style={{ display: "none" }} onChange={importData} />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="wrap">
+        <div className="nav">
+          <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}>📈 Дашборд</button>
+          <button className={view === "report" ? "active" : ""} onClick={() => setView("report")}>📋 Общий отчёт и анализ</button>
+        </div>
+
+        {view === "dashboard"
+          ? <Dashboard records={records} onSave={handleSave} />
+          : <Report records={records} />}
+      </div>
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
