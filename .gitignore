@@ -2,3 +2,9 @@
 *.log
 .DS_Store
 Thumbs.db
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+production-management-system.zip
